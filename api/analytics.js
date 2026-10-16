@@ -1,6 +1,8 @@
 const validKey = (request) => {
-  const keys = JSON.parse(process.env.ADMIN_ACCESS_KEYS || '[]');
-  return Array.isArray(keys) && keys.includes(request.headers['x-admin-key']);
+  try {
+    const keys = JSON.parse(process.env.ADMIN_ACCESS_KEYS || '[]');
+    return Array.isArray(keys) && keys.length > 0 && keys.length <= 4 && keys.every(key => typeof key === 'string' && key.length > 0) && keys.includes(request.headers['x-admin-key']);
+  } catch { return false; }
 };
 
 const query = async (path, params) => {
@@ -12,6 +14,7 @@ const query = async (path, params) => {
 };
 
 export default async function handler(request, response) {
+  response.setHeader('Cache-Control', 'private, no-store');
   if (request.method !== 'GET' || !validKey(request)) return response.status(401).json({ error: 'No autorizado' });
   if (!process.env.VERCEL_ANALYTICS_TOKEN || !process.env.VERCEL_PROJECT_ID) return response.status(503).json({ error: 'Falta configurar las estadísticas en Vercel.' });
   try {

@@ -1,8 +1,10 @@
 import { handleUpload } from '@vercel/blob/client';
 
 const validKey = (key) => {
-  const keys = JSON.parse(process.env.ADMIN_ACCESS_KEYS || '[]');
-  return Array.isArray(keys) && keys.length > 0 && keys.length <= 4 && keys.includes(key);
+  try {
+    const keys = JSON.parse(process.env.ADMIN_ACCESS_KEYS || '[]');
+    return Array.isArray(keys) && keys.length > 0 && keys.length <= 4 && keys.every(value => typeof value === 'string' && value.length > 0) && keys.includes(key);
+  } catch { return false; }
 };
 export default async function handler(request, response) {
   try {

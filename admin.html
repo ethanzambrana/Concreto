@@ -1,28 +1,89 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex,nofollow"><title>CONCRETO · Administrar contenido</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>CONCRETO · Administrar contenido</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
   <main class="shell">
     <a class="brand" href="/">CON<span>CRETO</span><small>PANEL DE CONTENIDO</small></a>
-    <section id="login" class="login card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Publica sin tocar código.</h1><p>Introduce tu clave de acceso. Solo se aceptan hasta cuatro claves autorizadas.</p><form id="login-form"><label>Clave privada<input id="access-key" type="password" autocomplete="current-password" required autofocus></label><button>Entrar al panel →</button><p id="login-error" class="error" aria-live="polite"></p></form></section>
+    <section id="login" class="login card">
+      <p class="eyebrow">ACCESO PRIVADO</p><h1>Publica desde cualquier lugar.</h1>
+      <p>Introduce tu clave para administrar videos, documentos y descuentos desde el celular o la computadora.</p>
+      <form id="login-form"><label>Clave privada<input id="access-key" type="password" autocomplete="current-password" required autofocus></label><button type="submit">Entrar al panel →</button><p id="login-error" class="error" aria-live="polite"></p></form>
+    </section>
     <section id="dashboard" hidden>
-      <header class="top"><div><p class="eyebrow">PANEL PRIVADO</p><h1>Contenido de la web</h1><p>Elige una pestaña, completa los campos y publica. Siempre puedes editar o eliminar después.</p></div><button id="logout" class="quiet">Salir</button></header>
-      <nav class="tabs" aria-label="Tipo de contenido"><button class="active" data-tab="resources">PDF y enlaces</button><button data-tab="videos">Vídeos</button><button data-tab="offers">Ofertas</button><button data-tab="analytics">Estadísticas</button></nav>
+      <header class="top"><div><p class="eyebrow">PANEL PRIVADO</p><h1>¿Qué quieres publicar?</h1><p>Elige una opción. Te pediremos solamente los datos necesarios.</p></div><button id="logout" class="quiet" type="button">Salir</button></header>
+      <nav class="tabs" aria-label="Tipo de contenido">
+        <button class="active" data-tab="videos" type="button"><span>▶</span> Video</button><button data-tab="resources" type="button"><span>PDF</span> Documento</button><button data-tab="offers" type="button"><span>%</span> Descuento</button><button data-tab="pricing" type="button"><span>Bs</span> Precios</button><button data-tab="analytics" type="button"><span>↗</span> Estadísticas</button>
+      </nav>
       <section class="card editor">
-        <div id="resources-form" class="form-panel"><h2>Nuevo PDF o enlace</h2><p class="hint">Sube un PDF <strong>o</strong> pega un enlace. No hace falta hacer ambas cosas.</p><form data-kind="resources"><label>Título<input name="title" required placeholder="Ej. Guía de diseño"></label><label>Descripción<textarea name="description" required placeholder="Qué encontrará la persona al abrirlo"></textarea></label><div class="columns"><label>Categoría<input name="category" placeholder="GUÍA · ESTRUCTURAS"></label><label>Seleccionar PDF<input name="file" type="file" accept="application/pdf"></label></div><label>Enlace (si no subes un PDF)<input name="url" type="url" placeholder="https://..."></label><div class="form-actions"><button>Publicar recurso</button><button class="quiet cancel-edit" type="button" hidden>Cancelar edición</button></div></form></div>
-        <div id="videos-form" class="form-panel" hidden><h2>Nuevo vídeo</h2><p class="hint">Sube un vídeo corto, o pega el enlace de YouTube, TikTok, Drive u otra plataforma.</p><form data-kind="videos"><label>Título<input name="title" required placeholder="Ej. Tutorial de la app"></label><label>Descripción<textarea name="description" required></textarea></label><div class="columns"><label>Categoría<input name="category" placeholder="PREDISEÑO"></label><label>Seleccionar vídeo o portada<input name="file" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp"></label></div><label>Enlace del vídeo (si no subes uno)<input name="url" type="url" placeholder="https://..."></label><div class="form-actions"><button>Publicar vídeo</button><button class="quiet cancel-edit" type="button" hidden>Cancelar edición</button></div></form></div>
-        <div id="offers-form" class="form-panel" hidden><h2>Nueva oferta</h2><p class="hint">Úsalo para descuentos, paquetes o promociones por tiempo limitado.</p><form data-kind="offers"><label>Título<input name="title" required placeholder="Ej. Las 3 apps con 20% de descuento"></label><label>Descripción<textarea name="description" required placeholder="Explica qué incluye y su condición"></textarea></label><div class="columns"><label>Texto del botón<input name="button" placeholder="Solicitar oferta"></label><label>Enlace del botón<input name="url" type="url" placeholder="https://wa.me/... "></label></div><div class="form-actions"><button>Publicar oferta</button><button class="quiet cancel-edit" type="button" hidden>Cancelar edición</button></div></form></div>
-        <div id="analytics-form" class="form-panel" hidden><div class="analytics-heading"><div><h2>Estadísticas de la web</h2><p id="analytics-period" class="hint">Actualiza para ver los datos.</p></div><button id="refresh-analytics" type="button">Actualizar</button></div><p id="analytics-error" class="error" aria-live="polite"></p><div id="analytics-content" hidden><div class="metric-grid"><div class="metric"><span>VISITAS</span><strong id="metric-views">—</strong></div><div class="metric"><span>PERSONAS</span><strong id="metric-visitors">—</strong></div></div><div class="analytics-grid"><section><h3>Páginas más vistas</h3><ol id="analytics-pages" class="analytics-list"></ol></section><section><h3>Países principales</h3><ol id="analytics-countries" class="analytics-list"></ol></section><section><h3>Dispositivos</h3><ol id="analytics-devices" class="analytics-list"></ol></section></div></div><p class="hint stats-note">Datos anónimos de Vercel; no se muestran nombres ni información privada de visitantes.</p></div>
+        <div id="videos-form" class="form-panel">
+          <div class="panel-heading"><div><p class="step-label">PUBLICAR VIDEO</p><h2>Pega un enlace o sube el archivo</h2></div></div>
+          <form data-kind="videos">
+            <div class="choice-grid">
+              <label class="choice-card"><span class="choice-title">Enlace de TikTok, YouTube u otra plataforma</span><span class="field-help">La portada y el título se completan automáticamente.</span><input name="url" type="url" inputmode="url" autocomplete="url" placeholder="Pega aquí el enlace https://..."></label>
+              <label class="choice-card file-card"><span class="choice-title">O subir un video corto desde el celular</span><span class="field-help">MP4 o WebM, máximo 4 MB. Para videos grandes conviene pegar TikTok o YouTube.</span><input name="media" type="file" accept="video/mp4,video/webm"></label>
+            </div>
+            <div id="link-status" class="link-status" hidden aria-live="polite"></div>
+            <div id="video-preview" class="content-preview" hidden><img alt="Portada detectada"><div><span class="preview-platform"></span><strong class="preview-title"></strong><small>Vista previa automática</small></div></div>
+            <div class="columns"><label>Título<input name="title" required placeholder="Se completará al pegar el enlace"></label><label>Sección<select name="category"><option value="CONCRETO">General</option><option value="PREDISEÑO">Prediseño de Edificios</option><option value="ELEMENTOS">Calculadora de Elementos</option><option value="MURO">Muro de Contención</option><option value="DETALLES">Detalles Constructivos</option></select></label></div>
+            <label>Descripción <span class="optional">opcional</span><textarea name="description" placeholder="Una frase breve sobre el video"></textarea></label>
+            <label>Portada personalizada <span class="optional">opcional, sólo si subes un video</span><input name="cover" type="file" accept="image/jpeg,image/png,image/webp"></label>
+            <div class="upload-progress" hidden><span></span><strong>Preparando…</strong></div>
+            <div class="form-actions"><button type="submit">Publicar video</button><button class="quiet cancel-edit" type="button" hidden>Cancelar edición</button></div>
+          </form>
+        </div>
+        <div id="resources-form" class="form-panel" hidden>
+          <div class="panel-heading"><div><p class="step-label">PUBLICAR DOCUMENTO</p><h2>Sube un PDF o comparte un enlace</h2></div></div>
+          <form data-kind="resources">
+            <div class="choice-grid"><label class="choice-card file-card"><span class="choice-title">Seleccionar PDF</span><span class="field-help">Puedes elegirlo desde Archivos en tu celular.</span><input name="document" type="file" accept="application/pdf"></label><label class="choice-card"><span class="choice-title">O pegar un enlace</span><span class="field-help">Drive, una norma u otra página segura.</span><input name="url" type="url" inputmode="url" placeholder="https://..."></label></div>
+            <div class="columns"><label>Título<input name="title" required placeholder="Ej. Guía de diseño"></label><label>Categoría<select name="category"><option value="GENERAL">General</option><option value="GUÍA">Guías</option><option value="MEMORIA DE CÁLCULO">Memorias de cálculo</option><option value="NORMATIVA">Normativa</option><option value="PLANTILLA">Plantillas</option><option value="INVESTIGACIÓN">Investigación</option></select></label></div>
+            <label>Descripción <span class="optional">opcional</span><textarea name="description" placeholder="Qué encontrará la persona al abrirlo"></textarea></label>
+            <div class="upload-progress" hidden><span></span><strong>Preparando…</strong></div>
+            <div class="form-actions"><button type="submit">Publicar documento</button><button class="quiet cancel-edit" type="button" hidden>Cancelar edición</button></div>
+          </form>
+        </div>
+        <div id="offers-form" class="form-panel" hidden>
+          <div class="panel-heading"><div><p class="step-label">PUBLICAR DESCUENTO</p><h2>Elige las aplicaciones y la vigencia</h2></div></div>
+          <form data-kind="offers">
+            <fieldset><legend>1. ¿Qué aplicaciones tienen descuento?</legend><div class="product-options">
+              <label><input type="checkbox" name="products" value="prediseno"><span><strong>Prediseño</strong><small>de Edificios</small></span></label><label><input type="checkbox" name="products" value="elementos"><span><strong>Calculadora</strong><small>de Elementos</small></span></label><label><input type="checkbox" name="products" value="muro"><span><strong>Muro</strong><small>de Contención</small></span></label><label><input type="checkbox" name="products" value="detalles"><span><strong>Detalles</strong><small>Constructivos</small></span></label>
+            </div><button id="select-all-products" class="text-button" type="button">Seleccionar todas</button></fieldset>
+            <div class="columns"><label>2. Porcentaje de descuento<div class="input-suffix"><input name="discountPercent" type="number" inputmode="numeric" min="1" max="100" required placeholder="20"><span>%</span></div></label><label>3. Válido hasta<input name="endsAt" type="date" required></label></div>
+            <div id="offer-summary" class="offer-summary">Selecciona al menos una aplicación para ver el resumen.</div>
+            <details class="optional-fields"><summary>Personalizar texto y botón <span>opcional</span></summary><div class="details-body"><label>Título personalizado<input name="title" placeholder="Si lo dejas vacío, se genera solo"></label><label>Descripción<textarea name="description" placeholder="Condiciones o información adicional"></textarea></label><div class="columns"><label>Texto del botón<input name="button" placeholder="Solicitar descuento"></label><label>Enlace del botón<input name="url" type="url" placeholder="Si queda vacío, abre WhatsApp"></label></div></div></details>
+            <div class="form-actions"><button type="submit">Publicar descuento</button><button class="quiet cancel-edit" type="button" hidden>Cancelar edición</button></div>
+          </form>
+        </div>
+        <div id="pricing-form" class="form-panel" hidden>
+          <div class="panel-heading"><div><p class="step-label">PRECIOS Y VERSIONES</p><h2>Actualiza precios y fechas desde un solo lugar</h2><p class="hint">Si dejas un precio vacío, la web mostrará “Consultar precio”.</p></div></div>
+          <form id="pricing-settings">
+            <div class="pricing-admin-grid">
+              <fieldset class="pricing-admin-card"><legend>Prediseño de Edificios</legend><label>Precio visible<input name="predisenoPrice" placeholder="Ej. Bs 150"></label><label>Última actualización<input name="predisenoUpdatedAt" type="date"></label></fieldset>
+              <fieldset class="pricing-admin-card"><legend>Calculadora de Elementos</legend><label>Precio visible<input name="elementosPrice" placeholder="Ej. Bs 180"></label><label>Última actualización<input name="elementosUpdatedAt" type="date"></label></fieldset>
+              <fieldset class="pricing-admin-card"><legend>Muro de Contención</legend><label>Precio visible<input name="muroPrice" placeholder="Ej. Bs 200"></label><label>Última actualización<input name="muroUpdatedAt" type="date"></label></fieldset>
+              <fieldset class="pricing-admin-card"><legend>Detalles Constructivos</legend><label>Precio de referencia<input name="detallesPrice" placeholder="Consultar precios"></label><label>Última actualización<input name="detallesUpdatedAt" type="date"></label></fieldset>
+            </div>
+            <label>Precio del paquete de aplicaciones<input name="bundlePrice" placeholder="Ej. Bs 450"></label>
+            <div class="form-actions"><button type="submit">Guardar precios</button></div>
+          </form>
+        </div>
+        <div id="analytics-form" class="form-panel" hidden>
+          <div class="analytics-heading"><div><p class="step-label">ESTADÍSTICAS</p><h2>Actividad de la web</h2><p id="analytics-period" class="hint">Actualiza para ver los datos.</p></div><button id="refresh-analytics" type="button">Actualizar</button></div>
+          <p id="analytics-error" class="error" aria-live="polite"></p><div id="analytics-content" hidden><div class="metric-grid"><div class="metric"><span>VISITAS</span><strong id="metric-views">—</strong></div><div class="metric"><span>PERSONAS</span><strong id="metric-visitors">—</strong></div></div><div class="analytics-grid"><section><h3>Páginas más vistas</h3><ol id="analytics-pages" class="analytics-list"></ol></section><section><h3>Países principales</h3><ol id="analytics-countries" class="analytics-list"></ol></section><section><h3>Dispositivos</h3><ol id="analytics-devices" class="analytics-list"></ol></section></div></div><p class="hint stats-note">En esta prueba, las visitas se consultan desde el panel de Netlify.</p>
+        </div>
       </section>
-      <section class="card list-card"><div class="list-heading"><h2>Publicado</h2><span id="count">0 elementos</span></div><div id="items" class="items"></div></section>
+      <section class="card list-card"><div class="list-heading"><div><p class="step-label">EN LA WEB</p><h2>Contenido publicado</h2></div><span id="count">0 elementos</span></div><div id="items" class="items"></div></section>
     </section>
   </main>
-  <template id="item-template"><article class="item"><div><span class="tag"></span><h3></h3><p></p><a class="item-link" target="_blank" rel="noopener">Abrir enlace ↗</a></div><div class="item-actions"><button class="edit" type="button">Editar</button><button class="delete" type="button">Eliminar</button></div></article></template>
+  <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+  <template id="item-template"><article class="item"><div class="item-main"><span class="tag"></span><h3></h3><p></p><div class="item-meta"></div><a class="item-link" target="_blank" rel="noopener">Abrir enlace ↗</a></div><div class="item-actions"><button class="move-top order-action" type="button" title="Colocar primero">Primero</button><button class="move-up order-action" type="button" title="Mover arriba">↑</button><button class="move-down order-action" type="button" title="Mover abajo">↓</button><button class="edit" type="button">Editar</button><button class="delete" type="button">Eliminar</button></div></article></template>
   <script type="module" src="admin.js"></script>
 </body>
 </html>

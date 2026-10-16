@@ -1,0 +1,9 @@
+.git
+.vercel
+node_modules
+.env
+.env.*
+*.log
+ADMINISTRACION.md
+.backups
+revision

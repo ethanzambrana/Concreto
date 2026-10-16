@@ -2,9 +2,11 @@ import { list, put } from '@vercel/blob';
 
 const EMPTY = { resources: [], videos: [], offers: [] };
 const validKey = (request) => {
-  const keys = JSON.parse(process.env.ADMIN_ACCESS_KEYS || '[]');
-  const key = request.headers['x-admin-key'];
-  return Array.isArray(keys) && keys.length > 0 && keys.length <= 4 && keys.includes(key);
+  try {
+    const keys = JSON.parse(process.env.ADMIN_ACCESS_KEYS || '[]');
+    const key = request.headers['x-admin-key'];
+    return Array.isArray(keys) && keys.length > 0 && keys.length <= 4 && keys.every(value => typeof value === 'string' && value.length > 0) && keys.includes(key);
+  } catch { return false; }
 };
 const readContent = async () => {
   try {

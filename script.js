@@ -58,6 +58,37 @@
   const safeUrl = (value = '') => {
     try { const url = new URL(value, window.location.origin); return ['http:', 'https:'].includes(url.protocol) ? url.href : '#'; } catch { return '#'; }
   };
+  const productNames = { prediseno: 'Prediseño de Edificios', elementos: 'Calculadora de Elementos', muro: 'Muro de Contención', detalles: 'Detalles Constructivos' };
+  const resourceTypes = { 'GUÍA': 'guia', 'MEMORIA DE CÁLCULO': 'memoria', 'NORMATIVA': 'normativa', 'PLANTILLA': 'plantilla', 'INVESTIGACIÓN': 'memoria', 'GENERAL': 'all' };
+  const offerDate = (value) => value ? new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' }).format(new Date(value)) : '';
+  const simpleDate = (value) => value ? new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' }).format(new Date(`${value}T12:00:00-04:00`)) : '';
+  const renderCommerce = (settings = {}) => {
+    Object.keys(productNames).forEach((id) => {
+      const product = settings.products?.[id] || {};
+      const price = product.price || 'Consultar precio';
+      document.querySelectorAll(`[data-price="${id}"]`).forEach((element) => { element.textContent = price; });
+      const updated = simpleDate(product.updatedAt);
+      if (updated) document.querySelectorAll(`[data-updated="${id}"]`).forEach((element) => { element.textContent = `Actualizada el ${updated}`; });
+    });
+    document.querySelectorAll('[data-bundle-price]').forEach((element) => { element.textContent = settings.bundlePrice || 'Consultar precio'; });
+  };
+  const isActiveOffer = (item) => item.published && (!item.endsAt || new Date(item.endsAt).getTime() >= Date.now());
+  const offerProducts = (item) => item.products?.length ? item.products.filter(id => productNames[id]) : ['prediseno', 'elementos', 'muro'];
+  const offerUrl = (item) => item.url || makeWhatsAppUrl(item.discountPercent ? `${item.discountPercent}% de descuento en ${offerProducts(item).map(id => productNames[id]).join(', ')}` : (item.title || 'Oferta CONCRETO'));
+  const markDiscountedProducts = (offers) => {
+    document.querySelectorAll('[data-product-card]').forEach(card => card.querySelector('.product-offer-pill')?.remove());
+    Object.keys(productNames).forEach(product => {
+      const applicable = offers.filter(offer => Number(offer.discountPercent || 0) > 0 && offerProducts(offer).includes(product));
+      if (!applicable.length) return;
+      const best = applicable.reduce((winner, offer) => Number(offer.discountPercent || 0) > Number(winner.discountPercent || 0) ? offer : winner);
+      const card = document.querySelector(`[data-product-card="${product}"] .card-body`);
+      if (!card) return;
+      const badge = document.createElement('span');
+      badge.className = 'product-offer-pill';
+      badge.textContent = `${best.discountPercent || ''}% DE DESCUENTO${best.endsAt ? ` · HASTA ${offerDate(best.endsAt).toUpperCase()}` : ''}`;
+      card.insertBefore(badge, card.querySelector('.go'));
+    });
+  };
   const renderManagedContent = async () => {
     try {
       const response = await fetch('/api/content', { cache: 'no-store' });
@@ -66,9 +97,12 @@
       const resources = document.querySelector('#managed-resources');
       const videos = document.querySelector('#managed-videos');
       const offers = document.querySelector('#offers');
-      if (resources) resources.innerHTML = (content.resources || []).filter(item => item.published).map(item => `<article class="resource-card"><div class="resource-topline"><div class="resource-icon resource-icon--blue">${escapeHtml(item.kind || 'PDF')}</div></div><div class="resource-copy"><span class="resource-type">${escapeHtml(item.category || 'RECURSO')}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><div class="document-actions"><a class="resource-link" href="${safeUrl(item.url)}" target="_blank" rel="noopener">Ver recurso <span>↗</span></a></div></article>`).join('');
-      if (videos) videos.innerHTML = (content.videos || []).filter(item => item.published).map(item => `<a class="video-card managed-video" href="${safeUrl(item.url)}" target="_blank" rel="noopener"><span class="video-thumb">${item.thumbnail ? `<img src="${safeUrl(item.thumbnail)}" alt="">` : ''}<span class="video-play">▶</span><span class="video-platform">VIDEO</span></span><span class="video-card-copy"><span class="resource-type">${escapeHtml(item.category || 'CONCRETO')}</span><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.description)}</p></span></a>`).join('');
-      if (offers) offers.innerHTML = (content.offers || []).filter(item => item.published).map(item => `<article class="offer-card"><span class="offer-badge">OFERTA ACTIVA</span><div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><a class="btn btn-primary" href="${safeUrl(item.url || 'https://wa.me/59173447992')}" target="_blank" rel="noopener">${escapeHtml(item.button || 'Solicitar oferta')}</a></article>`).join('');
+      const activeOffers = (content.offers || []).filter(isActiveOffer);
+      if (resources) resources.innerHTML = (content.resources || []).filter(item => item.published).map(item => `<article class="resource-card" data-resource-type="${resourceTypes[item.category] || 'all'}"><div class="resource-topline"><div class="resource-icon resource-icon--blue">${escapeHtml(item.kind || 'PDF')}</div></div><div class="resource-copy"><span class="resource-type">${escapeHtml(item.category || 'RECURSO')}</span><h3>${escapeHtml(item.title)}</h3>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}</div><div class="document-actions"><a class="resource-link" href="${safeUrl(item.url)}" target="_blank" rel="noopener">Ver recurso <span>↗</span></a></div></article>`).join('');
+      if (videos) videos.innerHTML = (content.videos || []).filter(item => item.published).map(item => `<a class="video-card managed-video" href="${safeUrl(item.url)}" target="_blank" rel="noopener"><span class="video-thumb">${item.thumbnail ? `<img src="${safeUrl(item.thumbnail)}" alt="" loading="lazy">` : item.mediaType === 'upload' ? `<video src="${safeUrl(item.url)}#t=0.1" muted playsinline preload="none"></video>` : '<span class="video-placeholder">CONCRETO</span>'}<span class="video-play">▶</span><span class="video-platform">${escapeHtml(item.platform || 'VIDEO')}</span></span><span class="video-card-copy"><span class="resource-type">${escapeHtml(item.category || 'CONCRETO')}</span><strong>${escapeHtml(item.title)}</strong>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}</span></a>`).join('');
+      if (offers) offers.innerHTML = activeOffers.map(item => { const products = offerProducts(item); const title = item.title || `${item.discountPercent || ''}% de descuento`; const discountLabel = item.discountPercent ? `${item.discountPercent}%` : 'OFERTA'; return `<article class="offer-card"><div class="offer-top"><span class="offer-discount">${escapeHtml(discountLabel)}</span><span class="offer-badge">${item.discountPercent ? 'DESCUENTO ACTIVO' : 'OFERTA ACTIVA'}</span></div><div><h3>${escapeHtml(title)}</h3>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}<div class="offer-products">${products.map(id => `<span>${escapeHtml(productNames[id])}</span>`).join('')}</div>${item.endsAt ? `<p class="offer-deadline">Disponible hasta el <strong>${escapeHtml(offerDate(item.endsAt))}</strong></p>` : ''}</div><a class="btn btn-primary" href="${safeUrl(offerUrl(item))}" target="_blank" rel="noopener">${escapeHtml(item.button || (item.discountPercent ? 'Solicitar descuento' : 'Solicitar oferta'))}</a></article>`; }).join('');
+      markDiscountedProducts(activeOffers);
+      renderCommerce(content.settings || {});
     } catch (_) { /* La página principal sigue funcionando si el CMS aún no fue configurado. */ }
   };
   renderManagedContent();
@@ -171,7 +205,7 @@
     }));
   }
   const youtubeLibrary = document.querySelector('#youtube-library');
-  if (youtubeLibrary) youtubeLibrary.innerHTML = youtubeGroups.map(([group, ids, titles]) => `<details class="youtube-group" open><summary>${group}<span>${ids.length} videos</span></summary><div class="youtube-video-grid">${ids.map((id, index) => { const title = titles?.[index] || `Bitácora técnica · parte ${28 - index}`; return `<a class="youtube-video" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener noreferrer"><span class="youtube-thumb"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy"><span class="youtube-play">▶</span></span><strong>${title}</strong><small>Ver explicación completa en YouTube ↗</small></a>`; }).join('')}</div></details>`).join('');
+  if (youtubeLibrary) youtubeLibrary.innerHTML = youtubeGroups.map(([group, ids, titles], groupIndex) => `<details class="youtube-group"${groupIndex === 0 ? ' open' : ''}><summary>${group}<span>${ids.length} videos</span></summary><div class="youtube-video-grid">${ids.map((id, index) => { const title = titles?.[index] || `Bitácora técnica · parte ${28 - index}`; return `<a class="youtube-video" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener noreferrer"><span class="youtube-thumb"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy"><span class="youtube-play">▶</span></span><strong>${title}</strong><small>Ver explicación completa en YouTube ↗</small></a>`; }).join('')}</div></details>`).join('');
   document.querySelectorAll('[data-open-tutorials]').forEach((link) => link.addEventListener('click', () => {
     const series = document.querySelector(`#playlist-${link.dataset.openTutorials}`);
     if (series) series.classList.add('is-highlighted');
