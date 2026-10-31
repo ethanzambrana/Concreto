@@ -1,0 +1,52 @@
+import {icon} from './icons.js';
+let engine;
+const engineBase=new URL('./vendor/pdfjs/',import.meta.url).href;
+async function pdfEngine(){if(!engine)engine=import('./vendor/pdfjs/pdf.mjs').then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=engineBase+'pdf.worker.mjs';return pdf;});return engine;}
+function options(url){return {url,cMapUrl:engineBase+'cmaps/',cMapPacked:true,standardFontDataUrl:engineBase+'standard_fonts/',wasmUrl:engineBase+'wasm/',disableAutoFetch:true,disableStream:true,rangeChunkSize:65536,isEvalSupported:false};}
+function paperContrast(canvas){const context=canvas.getContext('2d',{willReadFrequently:true}),image=context.getImageData(0,0,canvas.width,canvas.height),data=image.data;let black=0;for(let i=0;i<data.length;i+=16)if(Math.max(data[i],data[i+1],data[i+2])<25)black++;const darkBackground=black>data.length/16*.35;for(let i=0;i<data.length;i+=4){const low=Math.min(data[i],data[i+1],data[i+2]),high=Math.max(data[i],data[i+1],data[i+2]);let shade=high-low>22?Math.round(low*.7):low;if(darkBackground)shade=high<35||low>245?255:high-low>22?Math.round(low*.7):255-low;data[i]=data[i+1]=data[i+2]=shade;}context.putImageData(image,0,0);}
+function contentBounds(canvas){const {width,height}=canvas,data=canvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,width,height).data;let x0=width,y0=height,x1=0,y1=0;for(let y=0;y<height;y++)for(let x=0;x<width;x++){const p=(y*width+x)*4;if(Math.min(data[p],data[p+1],data[p+2])<220){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}}if(x1<=x0||y1<=y0)return {x:0,y:0,width,height};const pad=Math.max(8,Math.round(Math.max(width,height)*.025));x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(width,x1+pad);y1=Math.min(height,y1+pad);return {x:x0,y:y0,width:x1-x0,height:y1-y0};}
+const images=new Map();let pending=[],active=0;
+const visible=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){visible.unobserve(entry.target);pending.push(entry.target);pump();}},{rootMargin:'120px'});
+function pump(){while(active<2&&pending.length){const node=pending.shift();if(!node.isConnected)continue;active++;renderThumbnail(node).finally(()=>{active--;pump();});}}
+export function clearThumbnailObservers(){visible.disconnect();pending=[];}
+export function thumbnail(node,file,url){node.dataset.pdfId=file.id;node._pdfFile=file;node._pdfUrl=url;const img=images.get(file.id);if(img){const image=new Image();image.src=img;image.alt='';node.replaceChildren(image);image.style.cssText='max-width:100%;max-height:100%;object-fit:contain';return;}
+ const connection=navigator.connection;if(!file.size_bytes||file.size_bytes>8*1024*1024||connection?.saveData||connection?.effectiveType==='2g'){node.querySelector('.thumbnail-text').textContent='Abrir PDF';return;}visible.observe(node);}
+async function renderThumbnail(node){let task,document;try{const pdf=await pdfEngine();if(!node.isConnected)return;task=pdf.getDocument(options(node._pdfUrl));document=await task.promise;const page=await document.getPage(1);const initial=page.getViewport({scale:1});const viewport=page.getViewport({scale:Math.min(460/initial.width,236/initial.height)});const canvas=window.document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext('2d',{willReadFrequently:true}),viewport,background:'#ffffff'}).promise;
+ if(node._pdfFile.source_file_id)paperContrast(canvas);const box=contentBounds(canvas),cropped=window.document.createElement('canvas');cropped.width=box.width;cropped.height=box.height;cropped.getContext('2d').drawImage(canvas,box.x,box.y,box.width,box.height,0,0,box.width,box.height);
+ const url=cropped.toDataURL('image/jpeg',.85);images.set(node._pdfFile.id,url);if(images.size>70)images.delete(images.keys().next().value);if(node.isConnected)node.replaceChildren(cropped);
+ }catch{const text=node.querySelector('.thumbnail-text');if(text)text.textContent='Abrir PDF';}finally{await (document?.destroy()||task?.destroy())?.catch(()=>{});}}
+
+function element(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}
+export function createPdfViewer(file,url){
+ const panel=element('section',undefined,'pdf-viewer');panel.setAttribute('aria-label','Vista PDF de '+file.file_name);
+ const heading=element('div',undefined,'pdf-title');heading.append(element('strong','Vista PDF'));const external=element('a','Abrir aparte');external.href=url;external.target='_blank';external.rel='noopener';heading.append(external);
+ const stage=element('div',undefined,'pdf-stage');stage.tabIndex=0;stage.setAttribute('aria-label','Plano. Desplaza para consultar la lámina');const status=element('p','Abriendo PDF…','pdf-status');status.setAttribute('role','status');stage.append(status);
+ const controls=element('div',undefined,'pdf-controls'),pageLabel=element('span','…','pdf-page'),zoomLabel=element('span','100%','pdf-zoom');pageLabel.setAttribute('aria-live','polite');
+ let task,pdf,renderTask,current=1,zoom=1,disposed=false,busy=false,queued=false,restorePosition=true,first=true,timer,paper=Boolean(file.source_file_id);const bounds=new Map();
+ const key='dc_reader:'+file.id;let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}');}catch{}
+ current=Math.max(1,Math.floor(Number(saved.page)||1));zoom=Math.max(.5,Math.min(4,Number(saved.zoom)||1));
+ function save(){if(!pdf||busy||disposed)return;try{localStorage.setItem(key,JSON.stringify({page:current,zoom,x:stage.scrollLeft/Math.max(1,stage.scrollWidth-stage.clientWidth),y:stage.scrollTop/Math.max(1,stage.scrollHeight-stage.clientHeight)}));}catch{}}
+ function action(text,label,fn){const button=element('button',text);button.type='button';button.setAttribute('aria-label',label);button.addEventListener('click',fn);controls.append(button);return button;}
+ const previous=action('Anterior','Lámina anterior',()=>{save();current--;restorePosition=false;render();});controls.append(pageLabel);const next=action('Siguiente','Lámina siguiente',()=>{save();current++;restorePosition=false;render();});controls.append(element('span','','pdf-gap'));
+ const less=action('−','Reducir zoom',()=>{zoom=Math.max(.5,zoom/1.25);restorePosition=false;render();});controls.append(zoomLabel);const more=action('+','Ampliar zoom',()=>{zoom=Math.min(4,zoom*1.25);restorePosition=false;render();});
+ const fit=action('Ajustar','Ajustar plano a la pantalla',()=>{zoom=1;restorePosition=false;render();});
+ const color=action(paper?'Papel':'Original','Cambiar el contraste de la vista',()=>{paper=!paper;color.textContent=paper?'Papel':'Original';restorePosition=true;render();});color.title='Solo cambia la vista. El PDF y el DWG originales se conservan.';heading.insertBefore(color,external);color.className='color-mode';
+ for(const [node,name,text] of [[previous,'back','Anterior'],[next,'forward','Siguiente'],[fit,'fit','Ajustar']]){const label=element('span',text,'control-label');node.replaceChildren(icon(name),label);}
+ function update(){previous.disabled=!pdf||current<=1;next.disabled=!pdf||current>=pdf.numPages;less.disabled=!pdf||zoom<=.5;more.disabled=!pdf||zoom>=4;fit.disabled=!pdf;pageLabel.textContent=pdf?`${current} / ${pdf.numPages}`:'…';zoomLabel.textContent=Math.round(zoom*100)+'%';}
+ async function render(){if(!pdf||disposed)return;if(busy){queued=true;return;}busy=true;update();
+  try{const page=await pdf.getPage(current);if(disposed)return;const base=page.getViewport({scale:1});
+   if(!bounds.has(current)){const scanScale=Math.min(700/base.width,700/base.height),scanView=page.getViewport({scale:scanScale}),scan=element('canvas');scan.width=Math.ceil(scanView.width);scan.height=Math.ceil(scanView.height);renderTask=page.render({canvasContext:scan.getContext('2d',{willReadFrequently:true}),viewport:scanView,background:'#fff'});await renderTask.promise;const box=contentBounds(scan);bounds.set(current,{x:box.x/scanScale,y:box.y/scanScale,width:box.width/scanScale,height:box.height/scanScale});}
+   const box=bounds.get(current),scale=Math.min(Math.max(200,stage.clientWidth-24)/box.width,Math.max(200,stage.clientHeight-24)/box.height)*zoom;
+   const viewport=page.getViewport({scale}),width=box.width*scale,height=box.height*scale,ratio=Math.min(window.devicePixelRatio||1,1.5,Math.sqrt(6000000/(width*height)));
+   const canvas=element('canvas');canvas.setAttribute('aria-label',`Lámina ${current} de ${pdf.numPages}`);canvas.width=Math.max(1,Math.floor(width*ratio));canvas.height=Math.max(1,Math.floor(height*ratio));canvas.style.width=width+'px';canvas.style.height=height+'px';
+   renderTask=page.render({canvasContext:canvas.getContext('2d',{willReadFrequently:true}),viewport,transform:[ratio,0,0,ratio,-box.x*scale*ratio,-box.y*scale*ratio],background:'#fff'});await renderTask.promise;if(disposed)return;if(paper)paperContrast(canvas);stage.replaceChildren(canvas);
+   if(first&&restorePosition){stage.scrollLeft=Number(saved.x||0)*Math.max(0,stage.scrollWidth-stage.clientWidth);stage.scrollTop=Number(saved.y||0)*Math.max(0,stage.scrollHeight-stage.clientHeight);}else if(!restorePosition){stage.scrollLeft=0;stage.scrollTop=0;}first=false;
+  }catch(error){if(!disposed&&error.name!=='RenderingCancelledException'){status.textContent='No se pudo mostrar esta lámina. Puedes abrir el PDF aparte o descargarlo.';stage.replaceChildren(status);}}
+  finally{busy=false;renderTask=null;update();if(queued){queued=false;render();}else save();}
+ }
+ stage.addEventListener('scroll',()=>{clearTimeout(timer);timer=setTimeout(save,200);},{passive:true});
+ const resize=new ResizeObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(pdf&&!disposed){restorePosition=true;render();}},200);});resize.observe(stage);
+ panel.append(heading,stage,controls);update();
+ Promise.resolve().then(async()=>{try{const lib=await pdfEngine();if(disposed)return;task=lib.getDocument(options(url));pdf=await task.promise;if(disposed){await pdf.destroy();return;}current=Math.min(current,pdf.numPages);await render();}catch{if(!disposed){status.textContent='No se pudo abrir la vista. Usa «Abrir aparte» o descarga el PDF.';stage.replaceChildren(status);}}});
+ return {node:panel,dispose(){save();disposed=true;clearTimeout(timer);resize.disconnect();renderTask?.cancel();(pdf?.destroy()||task?.destroy())?.catch(()=>{});}};
+}

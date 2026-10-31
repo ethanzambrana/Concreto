@@ -1,0 +1,28 @@
+const paths={
+ forward:'<path d="m9 4 8 8-8 8"/>',
+ fit:'<path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6M7 7h10v10H7z"/>',
+ back:'<path d="m15 4-8 8 8 8"/>',
+ search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+ bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',
+ download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+ refresh:'<path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3"/>',
+ external:'<path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/>',
+ close:'<path d="m5 5 14 14M5 19 19 5"/>',
+ file:'<path d="M5 3h9l5 5v13H5zM14 3v6h5M8 13h8M8 17h6"/>',
+ grid:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/>',
+ filter:'<path d="M3 5h18M6 12h12M10 19h4"/>',
+ check:'<path d="m5 12 4 4L19 6"/>',
+ team:'<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5v2"/>',
+ Columnas:'<path d="M6 3h12v18H6zM10 3v18M14 3v18"/>',
+ Escaleras:'<path d="M3 21v-5h5v-5h5V6h5V2h4"/>',
+ 'Losa radier':'<path d="m3 15 4-6h13l1 6H3v4h18v-4M7 9v6"/>',
+ Losas:'<path d="m3 15 6-8h12l-6 8H3v3h12l6-8v-3"/>',
+ 'Muro de sótano':'<path d="M5 3h4v14h12v4H5z"/>',
+ 'Muros de corte':'<path d="m6 5 10-3 3 3v14l-10 3-3-3zm3 3 10-3M9 8v14M6 5l3 3"/>',
+ 'Núcleo de ascensor':'<path d="M5 5h14v16H5zM12 2v20m-4-7 2-2 2 2m0-5 2 2 2-2"/>',
+ 'Obras complementarias':'<path d="m3 11 9-8 9 8M5 10v11h14V10M10 21v-6h5v6"/>',
+ Tinglados:'<path d="M4 21V9l8-6 8 6v12M2 10l10-8 10 8M4 13h16"/>',
+ Vigas:'<path d="M4 3h16v4h-6v10h6v4H4v-4h6V7H4z"/>',
+ Zapatas:'<path d="M10 3h4v11l3 3h4v4H3v-4h4l3-3z"/>'
+};
+export function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=paths[name]||paths.file;return svg;}
