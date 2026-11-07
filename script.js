@@ -65,12 +65,11 @@
   const renderCommerce = (settings = {}) => {
     Object.keys(productNames).forEach((id) => {
       const product = settings.products?.[id] || {};
-      const price = product.price || 'Consultar precio';
-      document.querySelectorAll(`[data-price="${id}"]`).forEach((element) => { element.textContent = price; });
+      document.querySelectorAll(`[data-price="${id}"]`).forEach((element) => { element.textContent = 'Consultar precios'; });
       const updated = simpleDate(product.updatedAt);
       if (updated) document.querySelectorAll(`[data-updated="${id}"]`).forEach((element) => { element.textContent = `Actualizada el ${updated}`; });
     });
-    document.querySelectorAll('[data-bundle-price]').forEach((element) => { element.textContent = settings.bundlePrice || 'Consultar precio'; });
+    document.querySelectorAll('[data-bundle-price]').forEach((element) => { element.textContent = 'Consultar precios'; });
   };
   const isActiveOffer = (item) => item.published && (!item.endsAt || new Date(item.endsAt).getTime() >= Date.now());
   const offerProducts = (item) => item.products?.length ? item.products.filter(id => productNames[id]) : ['prediseno', 'elementos', 'muro'];

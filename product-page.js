@@ -6,7 +6,7 @@
   document.querySelectorAll('[data-product-whatsapp]').forEach((link) => { link.href = whatsappUrl(productName); });
   fetch('/api/content', { cache: 'no-store' }).then((response) => response.ok ? response.json() : null).then((content) => {
     const product = content?.settings?.products?.[id] || {};
-    document.querySelectorAll('[data-product-price]').forEach((element) => { element.textContent = product.price || 'Consultar precio'; });
+    document.querySelectorAll('[data-product-price]').forEach((element) => { element.textContent = 'Consultar precios'; });
     if (product.updatedAt) {
       const date = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' }).format(new Date(`${product.updatedAt}T12:00:00-04:00`));
       document.querySelectorAll('[data-product-updated]').forEach((element) => { element.textContent = `Última actualización: ${date}`; });
